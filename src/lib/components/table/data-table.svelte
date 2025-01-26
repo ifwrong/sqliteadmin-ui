@@ -17,6 +17,7 @@
   import { DEFAULT_LIMIT, EMPTY_CONDITION } from '$lib/consts'
   import FilterRow from './filter-row.svelte'
   import { validateCondition } from '$lib/utils'
+  import EditableCell from './editable-cell.svelte'
   const {
     api,
     data,
@@ -46,6 +47,7 @@
   const primaryKeyColumn = $derived(tableInfo.columns.find((c) => c.pk))
   const primaryKeyColumnName = $derived(primaryKeyColumn?.name)
   let columnVisibleMapping: { [columnName: string]: boolean } = $state({})
+  let pendingUpdates: Record<string, Partial<TableRow>> = $state({})
 
   $effect(() => {
     columnVisibleMapping = columnNames.reduce((acc, columnName) => {
@@ -125,6 +127,78 @@
   function toggleFilter() {
     showFilter = !showFilter
   }
+
+  function handleCellUpdate(columnName: string, value: string, row: TableRow) {
+    // Compare the new value with the stringified old value
+    if (value !== `${row[columnName]}`) {
+      console.log(`Updating ${columnName} from ${row[columnName]} to ${value}`)
+      const pkName = primaryKeyColumnName ?? 'id'
+      // Update the item in the pendingUpdates object
+      pendingUpdates[`${row[pkName]}`] = {
+        ...pendingUpdates[`${row[pkName]}`],
+        [columnName]: value,
+      }
+    } else {
+      // Remove the item from the pendingUpdates object
+      const pkName = primaryKeyColumnName ?? 'id'
+      if (`${row[pkName]}` in pendingUpdates) {
+        delete pendingUpdates[`${row[pkName]}`][columnName]
+        if (Object.keys(pendingUpdates[`${row[pkName]}`]).length === 0) {
+          delete pendingUpdates[`${row[pkName]}`]
+        }
+      }
+    }
+  }
+
+  async function handleUpdates() {
+    loading = true
+    const updates = Object.keys(pendingUpdates).map(async (id) => {
+      const result = await api.updateRow(selectedTable, {
+        ...pendingUpdates[id],
+        [primaryKeyColumnName ?? 'id']: id,
+      })
+
+      if (result.ok) {
+        return {
+          id,
+          success: true,
+        }
+      } else {
+        return {
+          id,
+          success: false,
+          error: result.error,
+        }
+      }
+    })
+
+    const results = await Promise.allSettled(updates)
+    results.forEach(async (result) => {
+      if (result.status === 'fulfilled') {
+        if (result.value.success) {
+          console.log(`Updated row with id ${result.value.id}`)
+          // We can safely delete it now
+          delete pendingUpdates[result.value.id]
+        }
+      } else {
+        // TODO: handle error
+        console.error('Error updating row', result.reason)
+      }
+    })
+    loading = false
+  }
+
+  function shouldHighlight(
+    item: TableRow,
+    columnName: string,
+    pendingUpdates: Record<string, Partial<TableRow>>,
+  ) {
+    const pkName = primaryKeyColumnName ?? 'id'
+    return (
+      `${item[pkName]}` in pendingUpdates &&
+      columnName in pendingUpdates[`${item[pkName]}`]
+    )
+  }
 </script>
 
 <div class="flex flex-col overflow-hidden h-[calc(100vh-72px)]">
@@ -148,8 +222,8 @@
               : ''}</Button
           >
           <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild let:builder>
-              <Button variant="outline" builders={[builder]}
+            <DropdownMenu.Trigger>
+              <Button variant="outline"
                 >Columns <ChevronDown class="ml-2 h-4 w-4" /></Button
               >
             </DropdownMenu.Trigger>
@@ -166,6 +240,14 @@
           {#if selectedIds.size > 0}
             <Button size="sm" variant="destructive" onclick={triggerDelete}
               >Delete {selectedIds.size}</Button
+            >
+          {/if}
+          {#if Object.keys(pendingUpdates).length > 0}
+            <Button
+              size="sm"
+              variant="secondary"
+              onclick={handleUpdates}
+              disabled={loading}>Save Changes</Button
             >
           {/if}
         </div>
@@ -267,7 +349,17 @@
               {/if}
               {#each sortedColumnNames as columnName}
                 {#if columnVisibleMapping[columnName]}
-                  <Table.Cell>{item[columnName]}</Table.Cell>
+                  <EditableCell
+                    isEditable={columnName !== (primaryKeyColumnName ?? 'id')}
+                    highlight={shouldHighlight(
+                      item,
+                      columnName,
+                      pendingUpdates,
+                    )}
+                    initialValue={String(item[columnName])}
+                    onValueChange={(value: string) =>
+                      handleCellUpdate(columnName, value, item)}
+                  />
                 {/if}
               {/each}
             </Table.Row>
