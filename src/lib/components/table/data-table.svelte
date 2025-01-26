@@ -42,27 +42,36 @@
   let offset = $state(0)
   let condition = $state<Condition>(EMPTY_CONDITION)
 
-  const columnNames = Object.keys(data[0])
+  const columnNames = $derived(Object.keys(data[0]))
+  const primaryKeyColumn = $derived(tableInfo.columns.find((c) => c.pk))
+  const primaryKeyColumnName = $derived(primaryKeyColumn?.name)
+  let columnVisibleMapping: { [columnName: string]: boolean } = $state({})
 
-  const columnVisibileMapping: { [columnName: string]: boolean } = $state(
-    columnNames.reduce((acc, columnName) => {
+  $effect(() => {
+    columnVisibleMapping = columnNames.reduce((acc, columnName) => {
       return {
         ...acc,
         [columnName]: true,
       }
-    }, {}),
-  )
-  const hideableColumnNames = columnNames.filter(
-    (columnName) => columnName !== 'id',
-  )
-
-  const showActions = columnNames.includes('id')
-
-  const sortedColumnNames = columnNames.sort((a, b) => {
-    if (a === 'id' && b !== 'id') return -1
-    if (b === 'id' && a !== 'id') return 1
-    return 0
+    }, {})
   })
+
+  const hideableColumnNames = $derived(
+    columnNames.filter(
+      (columnName) => columnName !== (primaryKeyColumnName ?? 'id'),
+    ),
+  )
+
+  const showActions = $derived(primaryKeyColumn != null)
+
+  const sortedColumnNames = $derived(
+    columnNames.sort((a, b) => {
+      const primaryKey = primaryKeyColumnName ?? 'id'
+      if (a === primaryKey && b !== primaryKey) return -1
+      if (b === primaryKey && a !== primaryKey) return 1
+      return 0
+    }),
+  )
 
   const validFilters = $derived(validateCondition(condition))
 
@@ -147,7 +156,7 @@
             <DropdownMenu.Content>
               {#each hideableColumnNames as columnName}
                 <DropdownMenu.CheckboxItem
-                  bind:checked={columnVisibileMapping[columnName]}
+                  bind:checked={columnVisibleMapping[columnName]}
                 >
                   {columnName}
                 </DropdownMenu.CheckboxItem>
@@ -223,7 +232,7 @@
               <Table.Head></Table.Head>
             {/if}
             {#each sortedColumnNames as columnName}
-              {#if columnVisibileMapping[columnName]}
+              {#if columnVisibleMapping[columnName]}
                 <Table.Head>{columnName}</Table.Head>
               {/if}
             {/each}
@@ -236,12 +245,20 @@
               {#if showActions}
                 <Table.Cell
                   ><Checkbox
+                    checked={selectedIds.has(
+                      '' + item[primaryKeyColumnName ?? 'id'],
+                    )}
                     onCheckedChange={(v) => {
-                      if ('id' in item) {
+                      // primaryKeyColumnName should be not null otherwise the
+                      // showActions condition would have been false.
+                      if (
+                        primaryKeyColumnName &&
+                        primaryKeyColumnName in item
+                      ) {
                         if (v) {
-                          selectedIds.add('' + item.id)
+                          selectedIds.add('' + item[primaryKeyColumnName])
                         } else {
-                          selectedIds.delete('' + item.id)
+                          selectedIds.delete('' + item[primaryKeyColumnName])
                         }
                       }
                     }}
@@ -249,7 +266,7 @@
                 >
               {/if}
               {#each sortedColumnNames as columnName}
-                {#if columnVisibileMapping[columnName]}
+                {#if columnVisibleMapping[columnName]}
                   <Table.Cell>{item[columnName]}</Table.Cell>
                 {/if}
               {/each}
