@@ -42,7 +42,7 @@
   let offset = $state(0)
   let condition = $state<Condition>(EMPTY_CONDITION)
 
-  const columnNames = $derived(Object.keys(data[0]))
+  const columnNames = $derived(Object.keys(data[0] ?? {}))
   const primaryKeyColumn = $derived(tableInfo.columns.find((c) => c.pk))
   const primaryKeyColumnName = $derived(primaryKeyColumn?.name)
   let columnVisibleMapping: { [columnName: string]: boolean } = $state({})
