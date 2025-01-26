@@ -4,32 +4,42 @@
   import { Checkbox } from '$lib/components/ui/checkbox'
   import { SvelteSet } from 'svelte/reactivity'
   import { Button } from '$lib/components/ui/button'
-  import { ChevronDown } from 'lucide-svelte/icons'
+  import { Input } from '$lib/components/ui/input'
+  import { Label } from '$lib/components/ui/label'
+  import {
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    RefreshCwIcon,
+  } from 'lucide-svelte/icons'
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu'
   import type { Condition, Filter } from '$lib/types'
-  import { EMPTY_CONDITION } from '$lib/consts'
+  import { DEFAULT_LIMIT, EMPTY_CONDITION } from '$lib/consts'
   import FilterRow from './filter-row.svelte'
   import { validateCondition } from '$lib/utils'
   const {
     api,
     data,
-    tableLoading,
-    tableInfo,
     selectedTable,
+    tableInfo,
+    tableLoading,
+    queryTime,
     onRefetch,
   }: {
     api: API
     data: TableRow[]
-    tableLoading: boolean
-    tableInfo: TableInfo
     selectedTable: string
-    onRefetch: (condition: Condition) => void
+    tableInfo: TableInfo
+    tableLoading: boolean
+    queryTime: number | null
+    onRefetch: (condition: Condition, limit: number, offset: number) => void
   } = $props()
 
   const selectedIds: SvelteSet<string> = $state(new SvelteSet())
   let showFilter = $state(false)
   let loading = $state(false)
-
+  let limit = $state(DEFAULT_LIMIT)
+  let offset = $state(0)
   let condition = $state<Condition>(EMPTY_CONDITION)
 
   const columnNames = Object.keys(data[0])
@@ -56,6 +66,20 @@
 
   const validFilters = $derived(validateCondition(condition))
 
+  function goToPreviousPage() {
+    offset = Math.max(0, offset - limit)
+    onRefetch(condition, limit, offset)
+  }
+
+  function goToNextPage() {
+    offset += limit
+    onRefetch(condition, limit, offset)
+  }
+
+  function refresh() {
+    onRefetch(condition, limit, offset)
+  }
+
   function createEmptyFilter(): Filter {
     return {
       column: '',
@@ -78,7 +102,7 @@
         if (result.ok) {
           console.log(`Deleted ${result.data.rowsAffected} rows}`)
           selectedIds.clear()
-          onRefetch(condition)
+          onRefetch(condition, limit, offset)
         } else {
           // TODO: handle error
           console.error('Error deleting rows', result.error)
@@ -98,13 +122,22 @@
   {#if tableLoading}
     <div class="px-4 py-6 lg:px-8">Loading...</div>
   {:else}
+    <!-- Controls -->
     <div class="flex flex-wrap items-center p-4">
-      <div class="mb-4 mt-2 text-center">
-        Table: <strong class="ml-1">{selectedTable}</strong>
+      <div class="text-center">
+        Table: <strong class="ml-1">{selectedTable}</strong>,
+        <span class="ml-2"
+          >Total Rows:
+          <strong>{tableInfo.count}</strong></span
+        >
       </div>
       <div class="flex grow justify-between">
-        <div class="mb-3 ml-4 space-x-2">
-          <Button variant="outline" onclick={toggleFilter}>Filter</Button>
+        <div class="ml-4 space-x-2">
+          <Button variant="outline" onclick={toggleFilter}
+            >Filter {condition.cases.length
+              ? `(${condition.cases.length})`
+              : ''}</Button
+          >
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild let:builder>
               <Button variant="outline" builders={[builder]}
@@ -129,6 +162,7 @@
         </div>
       </div>
     </div>
+    <!-- End of Controls -->
     {#if showFilter}
       <div class="border-t p-3 space-y-3">
         <div class="flex justify-between">
@@ -143,12 +177,12 @@
               variant="ghost"
               onclick={() => {
                 condition.cases = []
-                onRefetch(condition)
+                onRefetch(condition, limit, offset)
               }}>Clear all</Button
             >
             <Button
               onclick={() => {
-                onRefetch(condition)
+                onRefetch(condition, limit, offset)
               }}
               disabled={!validFilters}>Apply</Button
             >
@@ -172,24 +206,15 @@
                   showFilter = false
                 }
 
-                onRefetch(condition)
+                onRefetch(condition, limit, offset)
               }}
             />
           {/if}
         {/each}
       </div>
     {/if}
-    <!--
-	<form onsubmit={preventDefault(filterResults)} class="mb-4 flex space-x-2">
-		<Input
-			type="text"
-			placeholder={'Filter data like age > 25 and name contains "Bob"'}
-			bind:value={filterText}
-		/>
-		<Button type="submit">Filter</Button>
-	</form>
-	-->
-    <div class="border-t overflow-y-auto">
+    <!-- Table Wrapper -->
+    <div class="border-t border-b overflow-y-auto">
       <Table.Root>
         <Table.Header>
           <Table.Row>
@@ -233,6 +258,31 @@
         </Table.Body>
       </Table.Root>
     </div>
+    <!-- Table Footer -->
+    <div class="p-2 pr-6 flex items-center justify-end space-x-4">
+      <p>
+        <strong>{data.length}</strong> rows
+      </p>
+      <p>
+        <strong>{queryTime}</strong>ms
+      </p>
+      <div class="flex space-x-2 items-center">
+        <Button variant="outline" onclick={goToPreviousPage}>
+          <ChevronLeft class="h-4 w-4" />
+        </Button>
+        <Label>Limit</Label>
+        <Input min={1} type="number" bind:value={limit} class="max-w-24" />
+        <Label>Offset</Label>
+        <Input min={0} type="number" bind:value={offset} class="max-w-24" />
+        <Button variant="outline" onclick={goToNextPage}
+          ><ChevronRight class="h-4 w-4" /></Button
+        >
+        <Button variant="outline" onclick={refresh}
+          ><RefreshCwIcon class="h-4 w-4" /></Button
+        >
+      </div>
+    </div>
+    <!-- Table Wrapper -->
   {/if}
 </div>
 

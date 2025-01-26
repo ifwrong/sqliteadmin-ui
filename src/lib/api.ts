@@ -1,7 +1,7 @@
 import type { Condition, Credentials } from './types'
 
 export class API {
-  constructor(private credentials: Credentials) {}
+  constructor(private credentials: Credentials) { }
 
   async ping(): Promise<APIResponse<PingResponse>> {
     return this._request({
@@ -21,11 +21,19 @@ export class API {
     })
   }
 
-  async fetchTableData(
-    tableName: string,
-    includeInfo: boolean,
-    condition: Condition,
-  ): Promise<APIResponse<FetchTableResponse>> {
+  async fetchTableData({
+    tableName,
+    includeInfo,
+    condition,
+    limit = 100,
+    offset = 0,
+  }: {
+    tableName: string
+    includeInfo: boolean
+    condition: Condition
+    limit?: number
+    offset?: number
+  }): Promise<APIResponse<FetchTableResponse>> {
     return this._request({
       method: 'POST',
       body: JSON.stringify({
@@ -34,6 +42,8 @@ export class API {
           tableName,
           includeInfo,
           condition,
+          limit,
+          offset,
         },
       }),
     })

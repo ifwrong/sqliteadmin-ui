@@ -1,6 +1,6 @@
 <script lang="ts">
   import { API, type TableInfo, type TableRow } from '$lib/api'
-  import { EMPTY_CONDITION } from '$lib/consts'
+  import { DEFAULT_LIMIT, EMPTY_CONDITION } from '$lib/consts'
   import type { Condition } from '$lib/types'
   import DataTable from './table/data-table.svelte'
 
@@ -11,14 +11,33 @@
   let tableData: TableRow[] = $state([])
   let tableInfo: TableInfo | undefined = $state()
   let tableLoading = $state(false)
+  let queryTime = $state<number | null>(null)
 
-  async function fetchTable(
-    tableName: string,
-    includeInfo: boolean,
-    condition: Condition,
-  ) {
-    tableLoading = true
-    const result = await api.fetchTableData(tableName, includeInfo, condition)
+  async function fetchTable({
+    tableName,
+    includeInfo,
+    condition,
+    limit,
+    offset,
+  }: {
+    tableName: string
+    includeInfo: boolean
+    condition: Condition
+    limit: number
+    offset: number
+  }) {
+    const startTime = performance.now()
+    const result = await api.fetchTableData({
+      tableName,
+      includeInfo,
+      condition,
+      limit,
+      offset,
+    })
+    const endTime = performance.now()
+
+    // Calculate queryTime in ms
+    queryTime = Math.round(endTime - startTime)
 
     if (result.ok) {
       tableData = result.data.rows ?? []
@@ -34,7 +53,13 @@
   $effect(() => {
     if (selectedTable) {
       tableLoading = true
-      fetchTable(selectedTable, true, EMPTY_CONDITION)
+      fetchTable({
+        tableName: selectedTable,
+        includeInfo: true,
+        condition: EMPTY_CONDITION,
+        limit: DEFAULT_LIMIT,
+        offset: 0,
+      })
     }
   })
 </script>
@@ -46,10 +71,18 @@
     <DataTable
       {api}
       data={tableData}
-      {tableLoading}
-      {tableInfo}
       {selectedTable}
-      onRefetch={(condition) => fetchTable(selectedTable, false, condition)}
+      {tableInfo}
+      {tableLoading}
+      {queryTime}
+      onRefetch={(condition, limit, offset) =>
+        fetchTable({
+          tableName: selectedTable,
+          includeInfo: false,
+          condition,
+          limit,
+          offset,
+        })}
     />
   </div>
 {/if}
