@@ -16,7 +16,7 @@
   let isTablesExpanded = $state(false)
 </script>
 
-<div class="sticky pb-12">
+<div class="sticky pb-12 overflow-y-auto h-[calc(100vh-72px)]">
   <div class="space-y-4 py-4">
     <div class="px-3 py-2">
       <Collapsible.Root bind:open={isTablesExpanded}>
@@ -26,7 +26,7 @@
             variant="ghost"
             class="w-full p-2 flex justify-between"
           >
-            <h2 class="text-lg font-semibold tracking-tight">Tables</h2>
+            <h2 class="font-semibold tracking-tight">Tables</h2>
             {#if isTablesExpanded}
               <ChevronUp class="h-4 w-4" />
             {:else}
