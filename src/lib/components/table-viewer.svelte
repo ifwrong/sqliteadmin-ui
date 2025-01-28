@@ -5,6 +5,8 @@
   import Sidebar from './sidebar.svelte'
   import TableInfo from './table-info.svelte'
   import { API } from '$lib/api'
+  import { app } from '$lib/stores/app.svelte'
+  import { toast } from 'svelte-sonner'
 
   type Props = {
     credentials: Credentials
@@ -12,7 +14,23 @@
 
   let { credentials }: Props = $props()
 
-  let api = $derived(new API(credentials))
+  let api = $derived(
+    new API(credentials)
+      .addInterceptor((response) => {
+        if (response.statusCode >= 400 && !response.ok) {
+          toast.error('Error', {
+            description: response.message,
+          })
+        }
+        return response
+      })
+      .addInterceptor((response) => {
+        if (response.statusCode === 401) {
+          app.logout()
+        }
+        return response
+      }),
+  )
 
   let tables: string[] = $state([])
   let selectedTable: string | undefined = $state()

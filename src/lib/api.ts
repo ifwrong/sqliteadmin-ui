@@ -1,6 +1,10 @@
 import type { Condition, Credentials } from './types'
 
 export class API {
+  private _interceptors: (<TData>(
+    response: APIResponse<TData>,
+  ) => APIResponse<TData>)[] = []
+
   constructor(private credentials: Credentials) { }
 
   async ping(): Promise<APIResponse<PingResponse>> {
@@ -65,6 +69,30 @@ export class API {
     })
   }
 
+  async updateRow(
+    tableName: string,
+    row: Partial<TableRow>,
+  ): Promise<APIResponse<UpdateRowResponse>> {
+    return this._request({
+      method: 'POST',
+      body: JSON.stringify({
+        query: 'UpdateRow',
+        params: {
+          tableName,
+          row,
+        },
+      }),
+    })
+  }
+
+  addInterceptor(
+    interceptor: <TData>(response: APIResponse<TData>) => APIResponse<TData>,
+  ) {
+    this._interceptors.push(interceptor)
+
+    return this
+  }
+
   async _request<TData>(options: RequestInit): Promise<APIResponse<TData>> {
     const mergedOptions = { ...options }
     mergedOptions.headers = {
@@ -75,28 +103,25 @@ export class API {
 
     try {
       const res = await fetch(this.credentials.endpoint, mergedOptions)
-      if (!res.ok) {
-        throw new Error('Failed to fetch data')
-      }
       const data = await res.json()
-      return successResponse(data, res.status)
-    } catch (error) {
-      let errString
-      if (error instanceof Error) {
-        errString = error.message
-      } else {
-        errString = 'An unknown error occurred'
+      if (res.ok) {
+        return pipeWith(successResponse(data, res.status), this._interceptors)
       }
-
-      return errResponse(errString, 500)
+      return pipeWith(
+        errResponse(data?.message ?? '', res.status),
+        this._interceptors,
+      )
+    } catch (error) {
+      console.error(error)
+      return errResponse('An unexpected error occurred', 500)
     }
   }
 }
 
-function errResponse(error: string, statusCode: number): ErrorResponse {
+function errResponse(message: string, statusCode: number): ErrorResponse {
   return {
     ok: false,
-    error,
+    message,
     statusCode,
   }
 }
@@ -116,7 +141,7 @@ type APIResponse<TData> = SuccessResponse<TData> | ErrorResponse
 
 type ErrorResponse = {
   ok: false
-  error: string
+  message: string
   statusCode: number
 }
 
@@ -156,4 +181,15 @@ export type TableRow = Record<string, unknown>
 
 type DeleteRowsResponse = {
   rowsAffected: number
+}
+
+type UpdateRowResponse = {
+  status: string
+}
+
+function pipeWith<TData>(
+  response: APIResponse<TData>,
+  funcs: (<TData>(response: APIResponse<TData>) => APIResponse<TData>)[],
+) {
+  return funcs.reduce((acc, func) => func(acc), response)
 }

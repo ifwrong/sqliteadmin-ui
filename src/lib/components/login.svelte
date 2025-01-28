@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button/index.js'
   import * as Card from '$lib/components/ui/card/index.js'
+  import * as Alert from '$lib/components/ui/alert/index.js'
   import { Input } from '$lib/components/ui/input/index.js'
   import { Label } from '$lib/components/ui/label/index.js'
   import { preventDefault } from '$lib/utils'
@@ -17,7 +18,7 @@
     isNotEmpty(username) && isNotEmpty(password) && isNotEmpty(endpoint),
   )
 
-  let { onLogin } = $props()
+  let { error, onLogin } = $props()
 
   let onSubmit = () => {
     if (isValid) {
@@ -40,6 +41,7 @@
           <Label for="username">Username</Label>
           <Input
             id="username"
+            name="username"
             type="username"
             placeholder="admin"
             required
@@ -48,12 +50,19 @@
         </div>
         <div class="grid gap-2">
           <Label for="password">Password</Label>
-          <Input id="password" type="password" required bind:value={password} />
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            required
+            bind:value={password}
+          />
         </div>
         <div class="grid gap-2">
           <Label for="endpoint">Endpoint</Label>
           <Input
             id="endpoint"
+            name="endpoint"
             type="text"
             placeholder="https://myserver.com/admin"
             required
@@ -61,9 +70,15 @@
           />
         </div>
       </Card.Content>
-      <Card.Footer>
+      <Card.Footer class="flex-wrap space-y-4">
         <Button type="submit" class="w-full" disabled={!isValid}>Connect</Button
         >
+        {#if error}
+          <Alert.Root variant="destructive">
+            <Alert.Title>Error</Alert.Title>
+            <Alert.Description>{error}</Alert.Description>
+          </Alert.Root>
+        {/if}
       </Card.Footer>
     </Card.Root>
   </form>

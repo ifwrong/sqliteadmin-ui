@@ -5,14 +5,17 @@
   import Login from './login.svelte'
   import TableViewer from './table-viewer.svelte'
 
+  let error = $state<string | null>(null)
+
   async function handleLogin(credentials: Credentials) {
     const api = new API(credentials)
     const resp = await api.ping()
     if (resp.ok) {
       app.credentials = credentials
+      error = null
     } else {
-      // TODO: handle error
-      console.error('Error logging in', resp.error)
+      error = resp.message
+      console.error('Error logging in', resp.message)
     }
   }
 </script>
@@ -20,5 +23,5 @@
 {#if app.credentials}
   <TableViewer credentials={app.credentials} />
 {:else}
-  <Login onLogin={handleLogin} />
+  <Login {error} onLogin={handleLogin} />
 {/if}
