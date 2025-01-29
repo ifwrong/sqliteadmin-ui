@@ -3,40 +3,18 @@
   import { Button } from '$lib/components/ui/button'
   import * as Select from '$lib/components/ui/select'
   import type { Column } from '$lib/api'
-  import type { Selected } from 'bits-ui'
   import { Input } from '../ui/input'
-  import { onMount } from 'svelte'
+  import type { Operator } from '$lib/types'
 
-  const operators = [
-    {
-      value: 'eq',
-      label: '=',
-    },
-    {
-      value: 'neq',
-      label: '!=',
-    },
-    {
-      value: 'like',
-      label: 'like',
-    },
-    {
-      value: 'gt',
-      label: '>',
-    },
-    {
-      value: 'lt',
-      label: '<',
-    },
-    {
-      value: 'gte',
-      label: '>=',
-    },
-    {
-      value: 'lte',
-      label: '<=',
-    },
-  ]
+  const labelForOperator: Record<Operator, string> = {
+    eq: '=',
+    neq: '!=',
+    like: 'like',
+    gt: '>',
+    lt: '<',
+    gte: '>=',
+    lte: '<=',
+  }
 
   let {
     columns,
@@ -52,23 +30,8 @@
     onDelete: () => void
   } = $props()
 
-  let selectedColumn: Selected<string> | undefined = $state()
-  let selectedOperator: Selected<string> | undefined = $state()
-
-  onMount(() => {
-    selectedColumn = {
-      value: column,
-      label: column,
-    }
-    selectedOperator = {
-      value: operator,
-      label: findLabelForOperator(operator),
-    }
-  })
-
-  function findLabelForOperator(operator: string): string {
-    const found = operators.find((op) => op.value === operator)
-    return found ? found.label : ''
+  function getLabelForOperator(operator: string): string {
+    return labelForOperator[operator as Operator] ?? ''
   }
 
   const columnNames = columns.map((column) => column.name)
@@ -76,17 +39,9 @@
 
 <div class="flex items-center space-x-2">
   <!-- Column selector  -->
-  <Select.Root
-    selected={selectedColumn}
-    onSelectedChange={(selected) => {
-      selectedColumn = selected
-      if (selected && typeof selected.value === 'string') {
-        column = selected.value as string
-      }
-    }}
-  >
+  <Select.Root type="single" bind:value={column}>
     <Select.Trigger class="w-[100px]">
-      <Select.Value placeholder="Column" />
+      {column}
     </Select.Trigger>
     <Select.Content class="w-[180px]">
       <Select.Group>
@@ -97,25 +52,16 @@
         {/each}
       </Select.Group>
     </Select.Content>
-    <Select.Input name="selectedColumn" />
   </Select.Root>
 
-  <Select.Root
-    selected={selectedOperator}
-    onSelectedChange={(selected) => {
-      selectedOperator = selected
-      if (selected && typeof selected.value === 'string') {
-        operator = selected.value as string
-      }
-    }}
-  >
+  <Select.Root type="single" bind:value={operator}>
     <Select.Trigger class="w-[100px]">
-      <Select.Value placeholder="Operator" />
+      {getLabelForOperator(operator)}
     </Select.Trigger>
     <Select.Content>
-      {#each operators as operator}
-        <Select.Item value={operator.value} label={operator.label}>
-          {operator.label}</Select.Item
+      {#each Object.keys(labelForOperator) as operator}
+        <Select.Item value={operator} label={getLabelForOperator(operator)}>
+          {getLabelForOperator(operator)}</Select.Item
         >
       {/each}
     </Select.Content>

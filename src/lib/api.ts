@@ -11,7 +11,7 @@ export class API {
     return this._request({
       method: 'POST',
       body: JSON.stringify({
-        query: 'Ping',
+        command: 'Ping',
       }),
     })
   }
@@ -20,7 +20,7 @@ export class API {
     return this._request({
       method: 'POST',
       body: JSON.stringify({
-        query: 'ListTables',
+        command: 'ListTables',
       }),
     })
   }
@@ -41,7 +41,7 @@ export class API {
     return this._request({
       method: 'POST',
       body: JSON.stringify({
-        query: 'GetTable',
+        command: 'GetTable',
         params: {
           tableName,
           includeInfo,
@@ -60,7 +60,7 @@ export class API {
     return this._request({
       method: 'POST',
       body: JSON.stringify({
-        query: 'DeleteRows',
+        command: 'DeleteRows',
         params: {
           tableName,
           ids,
@@ -76,7 +76,7 @@ export class API {
     return this._request({
       method: 'POST',
       body: JSON.stringify({
-        query: 'UpdateRow',
+        command: 'UpdateRow',
         params: {
           tableName,
           row,
