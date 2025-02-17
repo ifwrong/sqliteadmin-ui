@@ -4,7 +4,16 @@ export type Credentials = {
   endpoint: string
 }
 
-export type Operator = 'eq' | 'like' | 'neq' | 'lt' | 'lte' | 'gt' | 'gte'
+export type Operator =
+  | 'eq'
+  | 'like'
+  | 'neq'
+  | 'lt'
+  | 'lte'
+  | 'gt'
+  | 'gte'
+  | 'null'
+  | 'notnull'
 
 export type LogicalOperator = 'and' | 'or'
 

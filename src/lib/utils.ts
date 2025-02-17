@@ -75,6 +75,6 @@ export function validateCondition(condition: Condition): boolean {
       return validateCondition(c)
     }
 
-    return c.column && c.column !== '' && c.value !== ''
+    return c.column && c.column !== ''
   })
 }

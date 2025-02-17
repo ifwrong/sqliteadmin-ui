@@ -14,6 +14,8 @@
     lt: '<',
     gte: '>=',
     lte: '<=',
+    null: 'is null',
+    notnull: 'is not null',
   }
 
   let {
@@ -67,7 +69,9 @@
     </Select.Content>
   </Select.Root>
 
-  <Input type="text" placeholder="Value" class="max-w-xs" bind:value />
+  {#if operator !== 'null' && operator !== 'notnull'}
+    <Input type="text" placeholder="Value" class="max-w-xs" bind:value />
+  {/if}
   <Button
     variant="destructive"
     size="sm"
