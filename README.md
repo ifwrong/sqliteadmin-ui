@@ -1,6 +1,6 @@
 # SQLiteAdmin UI
 
-Front-end to interact with a SQLite database running on a server.
+Front-end to interact with a SQLite database using the [SQLiteAdmin](https://github.com/joelseq/sqliteadmin-go) CLI or Go package.
 
 ## Installing
 
