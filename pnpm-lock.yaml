@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@accuser/svelte-plausible-analytics':
+        specifier: ^1.0.0
+        version: 1.0.0(@sveltejs/kit@2.16.1(@sveltejs/vite-plugin-svelte@5.0.3(svelte@5.19.3)(vite@6.0.11(jiti@1.21.7)(yaml@2.7.0)))(svelte@5.19.3)(vite@6.0.11(jiti@1.21.7)(yaml@2.7.0)))(svelte@5.19.3)
       svelte-radix:
         specifier: ^2.0.1
         version: 2.0.1(svelte@5.19.3)
@@ -101,6 +104,12 @@ importers:
         version: 3.0.4(jiti@1.21.7)(yaml@2.7.0)
 
 packages:
+
+  '@accuser/svelte-plausible-analytics@1.0.0':
+    resolution: {integrity: sha512-wZegJmMt3UGmTMo1KXEDL7pKjK/GyKfFAociujHsCKkCuzNIIfUhydancxnettLZVfBaOJe6xT6OrPpo/kfBYg==}
+    peerDependencies:
+      '@sveltejs/kit': ^1.30.3 || ^2.0.0
+      svelte: ^4.2.8
 
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
@@ -1750,6 +1759,11 @@ packages:
     resolution: {integrity: sha512-rAbqEGa8ovJy4pyBxZM70hg4pE6gDgaQ0Sl9M3enG3I0d6H4XSAM3GeNGLKnsBpuijUow064sf7ww1nutC5/3w==}
 
 snapshots:
+
+  '@accuser/svelte-plausible-analytics@1.0.0(@sveltejs/kit@2.16.1(@sveltejs/vite-plugin-svelte@5.0.3(svelte@5.19.3)(vite@6.0.11(jiti@1.21.7)(yaml@2.7.0)))(svelte@5.19.3)(vite@6.0.11(jiti@1.21.7)(yaml@2.7.0)))(svelte@5.19.3)':
+    dependencies:
+      '@sveltejs/kit': 2.16.1(@sveltejs/vite-plugin-svelte@5.0.3(svelte@5.19.3)(vite@6.0.11(jiti@1.21.7)(yaml@2.7.0)))(svelte@5.19.3)(vite@6.0.11(jiti@1.21.7)(yaml@2.7.0))
+      svelte: 5.19.3
 
   '@alloc/quick-lru@5.2.0': {}
 

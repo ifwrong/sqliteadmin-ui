@@ -83,3 +83,10 @@
     </Card.Root>
   </form>
 </div>
+<p class="mt-4 mx-auto px-8 max-w-sm">
+  For information on how to use this tool checkout the <a
+    class="underline"
+    href="https://github.com/joelseq/sqliteadmin-go"
+    target="_blank">README</a
+  >.
+</p>
