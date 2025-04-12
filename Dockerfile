@@ -1,5 +1,5 @@
 # 参数设置
-ARG DOCKER_REGISTRY=docker.io
+ARG DOCKER_REGISTRY=m.daocloud.io/docker.io/library
 
 # 构建阶段
 FROM ${DOCKER_REGISTRY}/node:20-alpine AS builder
